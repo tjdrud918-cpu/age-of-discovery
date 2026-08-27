@@ -946,7 +946,7 @@
 
             if (pos.lowerIdx !== lastAnimWpIdx) {
                 lastAnimWpIdx = pos.lowerIdx;
-                selectWaypoint(currentAnimExplorerKey, pos.lowerIdx, false);
+                selectWaypoint(currentAnimExplorerKey, pos.lowerIdx, false, false);
             }
 
             if (animProgress >= 100) {
@@ -961,7 +961,7 @@
                     document.getElementById('progress-exp-label').innerText = seqInfo;
                     document.getElementById('anim-status-text').innerText = `다음 항해 시작: ${nextExpName}`;
                     
-                    selectWaypoint(currentAnimExplorerKey, 0, true);
+                    selectWaypoint(currentAnimExplorerKey, 0, true, false);
                 } else {
                     animProgress = 100;
                     pauseAnimation();
@@ -1006,7 +1006,7 @@
 
             if (pos.lowerIdx !== lastAnimWpIdx) {
                 lastAnimWpIdx = pos.lowerIdx;
-                selectWaypoint(currentAnimExplorerKey, pos.lowerIdx, false);
+                selectWaypoint(currentAnimExplorerKey, pos.lowerIdx, false, false);
             }
         }
 
@@ -1156,15 +1156,20 @@
         }
 
         // SELECT WAYPOINT FUNCTION
-        function selectWaypoint(expKey, wpIdx, flyToMap = true) {
+        function selectWaypoint(expKey, wpIdx, flyToMap = true, autoShowRoutesTab = true) {
             const exp = explorersData[expKey];
             if (!exp || !exp.waypoints[wpIdx]) return;
             const wp = exp.waypoints[wpIdx];
 
             // Ensure we are on the routes tab if triggered from elsewhere
-            const routesTab = document.getElementById('tab-routes');
-            if (routesTab && routesTab.classList.contains('hidden')) {
-                switchTab('routes');
+            // (skipped when called internally from stopAnimation/animation loop,
+            // otherwise it recurses into switchTab -> stopAnimation -> selectWaypoint -> switchTab ...
+            // and crashes with "Maximum call stack size exceeded", which is why tabs stopped switching)
+            if (autoShowRoutesTab) {
+                const routesTab = document.getElementById('tab-routes');
+                if (routesTab && routesTab.classList.contains('hidden')) {
+                    switchTab('routes');
+                }
             }
 
             // Fly/Pan map to waypoint smoothly
@@ -1301,7 +1306,7 @@
             lastAnimWpIdx = -1;
             if (currentAnimQueue.length > 0) {
                 currentAnimExplorerKey = currentAnimQueue[0];
-                selectWaypoint(currentAnimExplorerKey, 0, true);
+                selectWaypoint(currentAnimExplorerKey, 0, true, false);
             }
             const slider = document.getElementById('anim-slider');
             const timeLabel = document.getElementById('progress-time-label');
